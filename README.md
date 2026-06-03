@@ -81,7 +81,7 @@ GitHub Pages, S3, or open `index.html` directly.
 ├── data/                                   Intermediate JSON for the JS bundles
 │   ├── wells_resolved.json                 Excel rows joined to DWR Stations
 │   ├── thresholds.json                     MT/MO/IM-2027 for the 26 RMS wells (9 GSP carryovers + 17 AGWL Mirror); the 8 supplemental Chico nested completions are monitored but unthresholded
-│   ├── thresholds_2022.json                The 17 adopted 2022 GSP MT/MO/IM values (6 N + 6 S + 4 Chico); used by compute_thresholds.py as the calibration sample for AGWL Mirror and as the carryover source for the 9 wells retained from the 2022 RMS network
+│   ├── thresholds_2022.json                The 16 adopted 2022 GSP MT/MO/IM values (6 N + 6 S + 4 Chico); used by compute_thresholds.py as the calibration sample for AGWL Mirror and as the carryover source for the 9 wells retained from the 2022 RMS network
 │   ├── vina_2027_thiessen_single.geojson   Single-tessellation polygons as GeoJSON
 │   └── vina_2027_thiessen_three_zone.geojson  Three-zone polygons as GeoJSON
 ├── raw/                                    Cached raw downloads (gitignored)
@@ -120,7 +120,7 @@ picker at the top of §5.2 swaps between them instantly without reloading.
 
 | Method | Output | When to use |
 |---|---|---|
-| **Three-zone tessellation** (default) | 26 entries: 13 N Voronoi cells + 1 dissolved Chico mgmt-area polygon + 12 S Voronoi cells. No N or S cell overlaps Chico. | SMC-defensible view: each management area carries distinct sustainability criteria, so partitioning *within* each area gives a self-contained polygon-by-polygon story. Chico's hydrogeology is better captured by treating it as a single aggregate (with CWSCH01b as the RMS well and 9 nested supplementals for context) than by Voronoi subdivision. |
+| **Three-zone tessellation** (default) | 26 entries: 13 N Voronoi cells + 1 dissolved Chico mgmt-area polygon + 12 S Voronoi cells. No N or S cell overlaps Chico. | SMC-defensible view: each management area carries distinct sustainability criteria, so partitioning *within* each area gives a self-contained polygon-by-polygon story. Chico's hydrogeology is better captured by treating it as a single aggregate (with CWSCH01b as the RMS well and 8 nested supplementals for context) than by Voronoi subdivision. |
 | **Single tessellation** | 26 cells, one Voronoi per 2027 RMS well, all clipped to the basin boundary. | Basin-wide proximity view; useful for stakeholders who want to see which RMS well is geographically closest to any point in the basin. |
 
 Both methods share the same foundations (Step 1 below: seeds, Step 2:
@@ -345,7 +345,7 @@ table.
 | 20N02E24C001M | South | 18 | 77 | 81 | |
 | 21N02E18C003M | South | 65 | 130 | 132 | |
 | 21N02E26E006M | South | 36 |  95 |  97 | inherits from `21N02E26E005M`, the 2022 GSP RMS at this same lat/lng (retired from 2027, different completion depth) |
-| CWSCH01b | Chico | 85 | 106 | 107 | the only RMS at the Chico aggregate; 9 nested-completion supplementals plot for context but are unthresholded |
+| CWSCH01b | Chico | 85 | 106 | 107 | the only RMS at the Chico aggregate; 8 nested-completion supplementals plot for context but are unthresholded |
 
 ### Source 2 — "AGWL Mirror" (Feb–April AGWL methodology, 17 wells)
 
