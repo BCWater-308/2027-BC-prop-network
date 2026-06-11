@@ -117,14 +117,9 @@
   /* -------------- KPI row ----------------------------------------------- */
   function renderKPIs() {
     const n = WELLS.length;
-    // Count RMS "sites" (distinct lat/lng) not raw is_2027_gwl_rms entries,
-    // so co-located CWSCH completions collapse to one site on the map.
-    const rmsSites = new Set(
-      WELLS.filter((w) => w.is_2027_gwl_rms && w.latitude != null && w.longitude != null)
-        .map((w) => `${(+w.latitude).toFixed(5)}|${(+w.longitude).toFixed(5)}`)
-    );
+    const rmsCount = WELLS.filter((w) => w.is_2027_gwl_rms).length;
     $("#kpi-wells").textContent = n;
-    $("#kpi-rms-2027").textContent = rmsSites.size;
+    $("#kpi-rms-2027").textContent = rmsCount;
     $("#kpi-poly").textContent = RMS_POLYGONS.length;
 
     // Data freshness from MEASUREMENTS metadata if available
