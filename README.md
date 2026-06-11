@@ -12,7 +12,7 @@ Built from `BC Network 2026 v8.xlsx`.
 >   inside the Chico mgmt area but are part of the North RMS network.
 >   Their Thiessen cells are clipped to NOT overlap with Chico — the
 >   cells sit north of the wells (in N proper), while the well markers
->   themselves remain inside Chico. The 11 cells whose seed wells are
+>   themselves remain inside Chico. The 10 cells whose seed wells are
 >   physically in N tile the rest of the basin-minus-Chico-minus-South
 >   region, absorbing any sliver between mgmt-area boundaries.
 > - **1 dissolved Chico** mgmt-area polygon, with **4 RMS wells**
@@ -50,7 +50,6 @@ pip3 install --user openpyxl pandas geopandas pyproj scipy shapely requests
 
 # 2. (one-time per data refresh) rebuild the data files
 python3 scripts/resolve_sites.py               # xlsx -> data/wells_resolved.json
-python3 scripts/build_polygons_single.py       # -> data/vina_2027_thiessen_single.geojson + js/polygons-data-single.js
 python3 scripts/build_polygons_three_zone.py   # -> data/vina_2027_thiessen_three_zone.geojson + js/polygons-data-three-zone.js
 python3 scripts/fetch_dwr_measurements.py      # -> js/measurements-data.js (~15 MB)
 python3 scripts/compute_thresholds.py          # -> data/thresholds.json
@@ -73,12 +72,11 @@ GitHub Pages, S3, or open `index.html` directly.
 ├── BC Network 2026 v8.xlsx                 Source workbook (79 wells, RMS flags, metadata)
 ├── js/
 │   ├── wells-data.js                       const WELLS — 79 wells joined to DWR site_code
-│   ├── polygons-data-single.js             const RMS_POLYGONS_SINGLE — 26 cells for 29 RMS wells, basin-wide (4 co-located Chico wells share one cell)
 │   ├── polygons-data-three-zone.js         const RMS_POLYGONS_THREE_ZONE — 26 entries (13 N Thiessen cells + 1 dissolved Chico polygon + 12 S Thiessen cells)
 │   ├── measurements-data.js                const MEASUREMENTS, MEASUREMENTS_META — periodic GWL
 │   ├── basin-boundary.js                   const VINA_BOUNDARY — B118 5-021.57 GeoJSON
 │   ├── readme-data.js                      const README_MD — this README bundled for the in-page accordion
-│   └── main.js                             UI logic (Leaflet, Plotly, layer toggles, polygon-method picker)
+│   └── main.js                             UI logic (Leaflet, Plotly, layer toggles, polygon picker)
 ├── data/                                   Intermediate JSON for the JS bundles
 │   ├── wells_resolved.json                 Excel rows joined to DWR Stations
 │   ├── thresholds.json                     MT/MO/IM-2027 for the 29 RMS wells (12 GSP carryovers + 17 AGWL Mirror); the 5 supplemental Chico nested completions are monitored but unthresholded
@@ -91,8 +89,7 @@ GitHub Pages, S3, or open `index.html` directly.
 │   └── b118_vina_esri.json                 Source Esri JSON before reshaping to GeoJSON
 └── scripts/                                Build scripts
     ├── resolve_sites.py                    xlsx + DWR Stations -> wells_resolved.json
-    ├── build_polygons_single.py            Single basin-wide tessellation (Method A below)
-    ├── build_polygons_three_zone.py        Per-management-area tessellations (Method B below)
+    ├── build_polygons_three_zone.py        Per-management-area tessellations
     ├── fetch_dwr_measurements.py           DWR CKAN -> measurements-data.js
     ├── compute_thresholds.py               12 GSP carryovers + 17 AGWL Mirror -> thresholds.json
     ├── build_wells_js.py                   wells_resolved + thresholds -> wells-data.js
@@ -102,34 +99,22 @@ GitHub Pages, S3, or open `index.html` directly.
 
 ## How the polygons are built
 
-> **Counts at a glance.** Both methods produce **26 polygons** from the **29 wells in the 2027 RMS network** (13 N, 4 Chico, 12 S). The 4 Chico RMS wells share one dissolved aggregate polygon rather than seeding individual cells.
->
-> - **Single tessellation** → 26 cells clipped to the Vina Subbasin boundary (the 4 co-located Chico RMS wells share one cell).
-> - **Three-zone tessellation** → 26 entries: 13 N Thiessen cells clipped to (Basin − Chico − South) + 1 dissolved Chico mgmt-area polygon + 12 S Thiessen cells clipped to South.
->
-> The 5 Chico supplemental completions (CWSCH04/05/06 and 22N01E28J001M/005M — sharing the CWSCH01b and 22N01E28J pads, respectively) are not RMS in the 2027 network, so they don't seed any polygon. They appear in §5.3 hydrographs as supplemental traces for the Chico aggregate.
+The dashboard uses the **three-zone tessellation**: 26 polygon entries built
+from 29 RMS wells (13 N, 4 Chico, 12 S). The 4 Chico RMS wells share one
+dissolved aggregate polygon rather than seeding individual cells.
 
-A Thiessen polygon for a point is the locus of points in
-space that are closer to that point than to any other point in the seed set.
-Used in groundwater monitoring to define the area each RMS well is
-**presumed** to represent.
+> **26 entries: 13 N Thiessen cells + 1 dissolved Chico mgmt-area polygon + 12 S Thiessen cells.**
+> No N or S cell overlaps Chico. The 5 Chico supplemental completions
+> (CWSCH04/05/06 and 22N01E28J001M/005M) are not RMS in the 2027 network
+> and don't seed any polygon — they appear in §5.3 hydrographs as
+> supplemental traces for the Chico aggregate.
 
-The dashboard ships **two complete tessellations** that answer different
-questions about how the basin should be partitioned. A `Polygon method`
-picker at the top of §5.2 swaps between them instantly without reloading.
+A Thiessen polygon for a point is the locus of points in space that are
+closer to that point than to any other point in the seed set. Used in
+groundwater monitoring to define the area each RMS well is **presumed**
+to represent.
 
-| Method | Output | When to use |
-|---|---|---|
-| **Three-zone tessellation** (default) | 26 entries: 13 N Thiessen cells + 1 dissolved Chico mgmt-area polygon + 12 S Thiessen cells. No N or S cell overlaps Chico. | SMC-defensible view: each management area carries distinct sustainability criteria, so partitioning *within* each area gives a self-contained polygon-by-polygon story. Chico's hydrogeology is better captured by treating it as a single aggregate (4 RMS wells and 5 supplementals for context) than by individual cell subdivision. |
-| **Single tessellation** | 26 cells for 29 RMS wells, all clipped to the basin boundary (the 4 co-located Chico RMS wells share one cell). | Basin-wide proximity view; useful for stakeholders who want to see which RMS well is geographically closest to any point in the basin. |
-
-Both methods share the same foundations (Step 1 below: seeds, Step 2:
-project to EPSG:3310). They diverge on the **clip boundary** (basin vs.
-mgmt-area polygons) and on **how Chico is handled** (the three-zone
-method dissolves Chico into one aggregate polygon; the single method
-gives each CWSCH well its own Thiessen cell within the basin).
-
-### Step 1 (shared): Pick the seeds
+### Step 1: Pick the seeds
 
 Read `BC Network 2026 v8.xlsx`. Keep every row where column **E (`2027 GWL
 RMS?`) = "Yes"**. This yields **29 wells** distributed by network assignment:
@@ -147,7 +132,7 @@ network-design mgmt-area assignment, which can differ from the workbook
 (`22N01E09B001M`, `22N01E20K001M`) `rms_mgmt_area = "01-Vina-North"`
 while `mgmt_area_full` stays `"02-Vina-Chico"`.
 
-### Step 2 (shared): Project to an equal-area metric CRS
+### Step 2: Project to an equal-area metric CRS
 
 Thiessen polygon tessellation only behaves sensibly in a Euclidean metric.
 Lat/lon degrees aren't Euclidean — a degree of longitude at 39.7° N is
@@ -157,7 +142,7 @@ into **NAD-83 California Albers Equal Area (EPSG:3310)** using `pyproj`.
 EPSG:3310 is the standard DWR / Bulletin 118 working CRS, so polygon areas
 in the dashboard match what you'd compute against the official DWR layers.
 
-### Method — Three-zone (per-mgmt-area)
+### Three-zone method
 
 `scripts/build_polygons_three_zone.py`.
 
@@ -228,73 +213,56 @@ rounding); the Chico aggregate is **~29,700 ac** (full mgmt area); the
 12 S cells are **~83,000 ac** (= full South mgmt area). N-Chico
 overlap: **0 ac**.
 
-### Per-polygon areas (post-2026-05-19+ revision)
+### Per-polygon areas
 
-Acres are rounded to the nearest integer. In three-zone, the 3
-Chico-located N RMS wells (marked ⚑) have polygons in N (north of where
-the well marker sits), not in Chico — their cell area is whatever piece
-of (Basin − Chico − South) is closer to that well than any other N
-seed. Both methods' totals are within rounding of 184,400 ac (the Vina
-Subbasin).
+Acres are rounded to the nearest integer. The 3 Chico-located N RMS
+wells (marked ⚑) have polygons in N (north of where the well marker sits),
+not in Chico — their cell area is whatever piece of
+(Basin − Chico − South) is closer to that well than any other N seed.
+Total polygon area is within rounding of 184,400 ac (the Vina Subbasin).
 
-| site / polygon | mgmt area (network) | acres (single) | acres (three-zone) |
-|---|---|---:|---:|
-| 22N01W05M001M | North | 7,541 | 7,541 |
-| 23N01E07H001M | North | 8,272 | 8,272 |
-| ⚑ 23N01E33A001M | North (in Chico geo) | 10,782 | 9,963 |
-| 23N01W36P001M | North | 7,088 | 7,088 |
-| 23N02W25C001M | North | 5,850 | 5,850 |
-| 23N01E29P002M | North | 3,968 | 3,896 |
-| 23N01W09E001M | North | 5,311 | 5,311 |
-| 23N01W10M001M | North | 3,522 | 3,522 |
-| 23N01W14R002M | North | 3,975 | 3,975 |
-| 23N01W27L001M | North | 3,166 | 3,166 |
-| 23N01W28M004M | North | 3,359 | 3,359 |
-| ⚑ 22N01E20K001M | North (in Chico geo) | 9,997 | 8,147 |
-| ⚑ 22N01E09B001M | North (in Chico geo) | 6,788 | 1,966 |
-| CWSCH01b, CWSCH02, CWSCH03, CWSCH07 | Chico | shared map location | (covered by Chico aggregate) |
-| 02-Vina-Chico (dissolved) | Chico | — | 29,718 |
-| 20N02E24C001M | South | 7,863 | 7,861 |
-| 21N02E18C003M | South | 12,365 | 5,244 |
-| 20N01E02H003M | South | 5,202 | 5,200 |
-| 20N02E09G001M | South | 6,522 | 6,521 |
-| 20N03E33L001M | South | 5,182 | 5,186 |
-| 21N01E10B003M | South | 6,309 | 6,650 |
-| 21N01E13L004M | South | 2,713 | 2,713 |
-| 21N01E25K001M | South | 2,748 | 2,748 |
-| 21N01E27D001M | South | 10,931 | 10,825 |
-| 21N02E26E006M | South | 11,791 | 11,480 |
-| 21N02E32E001M | South | 4,534 | 4,534 |
-| 21N03E32B001M | South | 14,223 | 14,225 |
+| site / polygon | mgmt area (network) | acres |
+|---|---|---:|
+| 22N01W05M001M | North | 7,541 |
+| 23N01E07H001M | North | 8,272 |
+| ⚑ 23N01E33A001M | North (in Chico geo) | 9,963 |
+| 23N01W36P001M | North | 7,088 |
+| 23N02W25C001M | North | 5,850 |
+| 23N01E29P002M | North | 3,896 |
+| 23N01W09E001M | North | 5,311 |
+| 23N01W10M001M | North | 3,522 |
+| 23N01W14R002M | North | 3,975 |
+| 23N01W27L001M | North | 3,166 |
+| 23N01W28M004M | North | 3,359 |
+| ⚑ 22N01E20K001M | North (in Chico geo) | 8,147 |
+| ⚑ 22N01E09B001M | North (in Chico geo) | 1,966 |
+| 02-Vina-Chico (dissolved; CWSCH01b/02/03/07) | Chico | 29,718 |
+| 20N02E24C001M | South | 7,861 |
+| 21N02E18C003M | South | 5,244 |
+| 20N01E02H003M | South | 5,200 |
+| 20N02E09G001M | South | 6,521 |
+| 20N03E33L001M | South | 5,186 |
+| 21N01E10B003M | South | 6,650 |
+| 21N01E13L004M | South | 2,713 |
+| 21N01E25K001M | South | 2,748 |
+| 21N01E27D001M | South | 10,825 |
+| 21N02E26E006M | South | 11,480 |
+| 21N02E32E001M | South | 4,534 |
+| 21N03E32B001M | South | 14,225 |
 
-### How the dashboard chooses
+### Notes on polygon design
 
-`index.html` loads both `polygons-data-single.js` and
-`polygons-data-three-zone.js` as siblings; `js/main.js` keeps a swappable
-`RMS_POLYGONS` reference pointing at whichever set the `Polygon method`
-picker has selected. Switching the picker calls `setPolygonMethod()`,
-which clears and rebuilds the Leaflet polygon layer, re-populates the
-§5.3 picker (the mgmt-area-prefixed label updates for the reassigned
-wells), and re-selects the previously-active well if it still exists in
-the new set. Both methods carry 26 polygon keys; in the three-zone method
-the Chico polygon is labeled `02-Vina-Chico` and carries four RMS primary
-wells, while the single method gives each CWSCH well its own cell (all
-co-located at the shared CWSCH map coordinate).
-
-### Method-specific notes
-
-1. **Chico aggregation.** The three-zone method dissolves Chico into a
-   single mgmt-area polygon (no internal subdivision). The four Chico RMS
-   wells (CWSCH01b/02/03/07) each get their own §5.3 picker slot so users
+1. **Chico aggregation.** Chico is dissolved into a single mgmt-area
+   polygon (no internal subdivision). The four Chico RMS wells
+   (CWSCH01b/02/03/07) each get their own §5.3 picker slot so users
    can view individual MT/MO/IM thresholds; all 9 Chico traces remain
    visible regardless of which is selected.
 2. **Edge-case wells.** Three RMS wells in the North network physically
    sit inside the Chico mgmt area (`22N01E09B001M`, `22N01E20K001M`,
-   `23N01E33A001M`). The three-zone
-   method clips their cells so they sit *north* of the wells, inside
-   the (Basin − Chico − South) region they represent for the North
-   network. An auditable `reassigned` flag in each well record tracks
-   this network-vs-geographic split.
+   `23N01E33A001M`). Their Thiessen cells are clipped so they sit
+   *north* of the wells, inside the (Basin − Chico − South) region
+   they represent for the North network. An auditable `reassigned` flag
+   in each well record tracks this network-vs-geographic split.
 
 ## MT / MO / IM-2027 threshold methodology
 
