@@ -73,7 +73,7 @@ GitHub Pages, S3, or open `index.html` directly.
 ├── BC Network 2026 v8.xlsx                 Source workbook (79 wells, RMS flags, metadata)
 ├── js/
 │   ├── wells-data.js                       const WELLS — 79 wells joined to DWR site_code
-│   ├── polygons-data-single.js             const RMS_POLYGONS_SINGLE — 26 cells (one Thiessen cell per 2027 RMS well), basin-wide
+│   ├── polygons-data-single.js             const RMS_POLYGONS_SINGLE — 26 cells for 29 RMS wells, basin-wide (4 co-located Chico wells share one cell)
 │   ├── polygons-data-three-zone.js         const RMS_POLYGONS_THREE_ZONE — 26 entries (13 N Thiessen cells + 1 dissolved Chico polygon + 12 S Thiessen cells)
 │   ├── measurements-data.js                const MEASUREMENTS, MEASUREMENTS_META — periodic GWL
 │   ├── basin-boundary.js                   const VINA_BOUNDARY — B118 5-021.57 GeoJSON
@@ -104,7 +104,7 @@ GitHub Pages, S3, or open `index.html` directly.
 
 > **Counts at a glance.** Both methods produce **26 polygons** from the **29 wells in the 2027 RMS network** (13 N, 4 Chico, 12 S). The 4 Chico RMS wells share one dissolved aggregate polygon rather than seeding individual cells.
 >
-> - **Single tessellation** → 26 cells, one Thiessen cell per 2027 RMS well clipped to the Vina Subbasin boundary.
+> - **Single tessellation** → 26 cells clipped to the Vina Subbasin boundary (the 4 co-located Chico RMS wells share one cell).
 > - **Three-zone tessellation** → 26 entries: 13 N Thiessen cells clipped to (Basin − Chico − South) + 1 dissolved Chico mgmt-area polygon + 12 S Thiessen cells clipped to South.
 >
 > The 5 Chico supplemental completions (CWSCH04/05/06 and 22N01E28J001M/005M — sharing the CWSCH01b and 22N01E28J pads, respectively) are not RMS in the 2027 network, so they don't seed any polygon. They appear in §5.3 hydrographs as supplemental traces for the Chico aggregate.
@@ -121,7 +121,7 @@ picker at the top of §5.2 swaps between them instantly without reloading.
 | Method | Output | When to use |
 |---|---|---|
 | **Three-zone tessellation** (default) | 26 entries: 13 N Thiessen cells + 1 dissolved Chico mgmt-area polygon + 12 S Thiessen cells. No N or S cell overlaps Chico. | SMC-defensible view: each management area carries distinct sustainability criteria, so partitioning *within* each area gives a self-contained polygon-by-polygon story. Chico's hydrogeology is better captured by treating it as a single aggregate (4 RMS wells and 5 supplementals for context) than by individual cell subdivision. |
-| **Single tessellation** | 26 cells, one Thiessen cell per 2027 RMS well, all clipped to the basin boundary. | Basin-wide proximity view; useful for stakeholders who want to see which RMS well is geographically closest to any point in the basin. |
+| **Single tessellation** | 26 cells for 29 RMS wells, all clipped to the basin boundary (the 4 co-located Chico RMS wells share one cell). | Basin-wide proximity view; useful for stakeholders who want to see which RMS well is geographically closest to any point in the basin. |
 
 Both methods share the same foundations (Step 1 below: seeds, Step 2:
 project to EPSG:3310). They diverge on the **clip boundary** (basin vs.
