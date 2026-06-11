@@ -118,9 +118,7 @@
   function renderKPIs() {
     const n = WELLS.length;
     // Count RMS "sites" (distinct lat/lng) not raw is_2027_gwl_rms entries,
-    // so nested Chico completions (CWSCH ×7 at one site, 22N01E28J ×3 at
-    // another) collapse to 2 sites rather than inflating the count to 10.
-    // The 2026-05-19 network framing is "27 RMS wells across 26 polygons".
+    // so co-located CWSCH completions collapse to one site on the map.
     const rmsSites = new Set(
       WELLS.filter((w) => w.is_2027_gwl_rms && w.latitude != null && w.longitude != null)
         .map((w) => `${(+w.latitude).toFixed(5)}|${(+w.longitude).toFixed(5)}`)
@@ -265,21 +263,22 @@
     return { dry, total };
   }
 
-  // For aggregate polygons (Chico), use the single RMS well's MT.
-  // For per-well polygons, use the seed RMS well's MT.
+  // For aggregate polygons (Chico), use the active primary well's MT/GSE
+  // (currentSelection.primaryWell when a specific CWSCH entry is selected,
+  // otherwise fall back to the first primary in rms_primary_swns).
   function polygonMT(poly) {
-    const primarySwn = poly.is_aggregate
-      ? (poly.rms_primary_swns || [])[0]
-      : poly.rms_well_swn;
+    const primarySwn = (poly.is_aggregate && currentSelection?.primaryWell)
+      ? currentSelection.primaryWell
+      : (poly.is_aggregate ? (poly.rms_primary_swns || [])[0] : poly.rms_well_swn);
     if (!primarySwn) return null;
     const w = WELLS.find((x) => x.swn === primarySwn);
     return w ? w.mt_ft : null;
   }
 
   function polygonRmsGSE(poly) {
-    const primarySwn = poly.is_aggregate
-      ? (poly.rms_primary_swns || [])[0]
-      : poly.rms_well_swn;
+    const primarySwn = (poly.is_aggregate && currentSelection?.primaryWell)
+      ? currentSelection.primaryWell
+      : (poly.is_aggregate ? (poly.rms_primary_swns || [])[0] : poly.rms_well_swn);
     if (!primarySwn) return null;
     const w = WELLS.find((x) => x.swn === primarySwn);
     return w ? (w.gse != null ? +w.gse : null) : null;
@@ -573,7 +572,7 @@
         || typeof RMS_POLYGONS_THREE_ZONE === "undefined") return;
     polygonMethod = method;
     RMS_POLYGONS = method === "three_zone" ? RMS_POLYGONS_THREE_ZONE : RMS_POLYGONS_SINGLE;
-    const keep = selectedPoly;
+    const keep = selectedPoly;  // always the bare zone_label (no ":" suffix)
     buildPolygonLayer();
     populatePolygonPicker();
     $("#kpi-poly").textContent = RMS_POLYGONS.length;
@@ -702,15 +701,25 @@
       return a.zone_label.localeCompare(b.zone_label);
     });
     sorted.forEach((p) => {
-      const opt = document.createElement("option");
-      opt.value = p.zone_label;
-      // Aggregate polygons (e.g. dissolved Chico mgmt area in the
-      // 2026-05-19 revision) supply their own display label since the
-      // zone_label by itself ("02-Vina-Chico") would be noise here.
-      opt.textContent = p.is_aggregate && p.rms_label
-        ? p.rms_label
-        : `${p.mgmt_area_full.replace(/^0\d-/, "")}  ·  ${p.zone_label}`;
-      sel.appendChild(opt);
+      const maShort = p.mgmt_area_full.replace(/^0\d-/, "");
+      // Aggregate polygons with multiple RMS primaries (e.g. Chico with 4
+      // CWSCH wells) get one picker entry per primary so each well's MT/MO/IM
+      // can be viewed independently while keeping all 9 context traces plotted.
+      if (p.is_aggregate && Array.isArray(p.rms_primary_swns) && p.rms_primary_swns.length > 1) {
+        p.rms_primary_swns.forEach((swn) => {
+          const opt = document.createElement("option");
+          opt.value = `${p.zone_label}:${swn}`;
+          opt.textContent = `${maShort}  ·  ${swn} (RMS)`;
+          sel.appendChild(opt);
+        });
+      } else {
+        const opt = document.createElement("option");
+        opt.value = p.zone_label;
+        opt.textContent = p.is_aggregate && p.rms_label
+          ? p.rms_label
+          : `${maShort}  ·  ${p.zone_label}`;
+        sel.appendChild(opt);
+      }
     });
     sel.addEventListener("change", () => selectPolygon(sel.value));
   }
@@ -719,13 +728,27 @@
   let currentSelection = null;
 
   function selectPolygon(zoneLabel) {
-    selectedPoly = zoneLabel;
+    // zoneLabel may be "zone_label:primaryWell" for multi-primary aggregates.
+    let polyLabel = zoneLabel, primaryWell = null;
+    if (zoneLabel.includes(":")) {
+      const idx = zoneLabel.indexOf(":");
+      polyLabel = zoneLabel.slice(0, idx);
+      primaryWell = zoneLabel.slice(idx + 1);
+    }
+    selectedPoly = polyLabel;
     Object.entries(polygonRefs).forEach(([k, r]) => {
-      r.lp.setStyle(styleForPolygon(r.poly, k === zoneLabel));
+      r.lp.setStyle(styleForPolygon(r.poly, k === polyLabel));
     });
-    $("#picker-poly").value = zoneLabel;
-    const poly = RMS_POLYGONS.find((p) => p.zone_label === zoneLabel);
+    const poly = RMS_POLYGONS.find((p) => p.zone_label === polyLabel);
     if (!poly) return;
+    // For multi-primary aggregates clicked from the map (no primaryWell
+    // suffix), default to the first primary and sync the picker.
+    if (poly.is_aggregate && Array.isArray(poly.rms_primary_swns)
+        && poly.rms_primary_swns.length > 1 && !primaryWell) {
+      primaryWell = poly.rms_primary_swns[0];
+    }
+    const pickerValue = primaryWell ? `${polyLabel}:${primaryWell}` : polyLabel;
+    $("#picker-poly").value = pickerValue;
 
     // Build well list. For aggregate polygons (Chico in the 2026-05-19
     // revision), the wells are the explicit completions associated with
@@ -738,13 +761,17 @@
       color: TRACE_COLORS[i % TRACE_COLORS.length],
     }));
 
-    // Polygon header
-    const rmsList = wellsInside.filter((w) => w.is_2027_gwl_rms).map((w) => w.swn).join(", ")
+    // Polygon header — when a specific primary is active (e.g. CWSCH02 in
+    // the Chico aggregate), show that well in the title and SMC line.
+    const rmsList = primaryWell
+      || wellsInside.filter((w) => w.is_2027_gwl_rms).map((w) => w.swn).join(", ")
       || poly.rms_well_swn
       || (poly.rms_well_swns || []).join(", ");
-    const headerTitle = poly.is_aggregate && poly.rms_label
-      ? `${poly.rms_label} — ${poly.mgmt_area_full} Management Area`
-      : `${poly.zone_label} — ${poly.mgmt_area_full} Management Area`;
+    const headerTitle = primaryWell
+      ? `${poly.mgmt_area_full.replace(/^0\d-/, "")}  ·  ${primaryWell} — ${poly.mgmt_area_full} Management Area`
+      : (poly.is_aggregate && poly.rms_label
+        ? `${poly.rms_label} — ${poly.mgmt_area_full} Management Area`
+        : `${poly.zone_label} — ${poly.mgmt_area_full} Management Area`);
     $("#poly-header").style.display = "block";
     $("#poly-header-title").textContent = headerTitle;
     $("#poly-header-meta").textContent = `${wellsInside.length} well${wellsInside.length === 1 ? "" : "s"} in zone · ${poly.area_acres.toLocaleString()} acres`;
@@ -756,6 +783,7 @@
 
     currentSelection = {
       poly,
+      primaryWell,   // active CWSCH well for multi-primary aggregates, or null
       wellsWithColor,
       visibility,
       sortCol: "rms27",
@@ -811,12 +839,11 @@
       }
 
       // Per-well thresholds for 2027 RMS wells.
-      // Values are groundwater ELEVATIONS in ft msl, NOT depth-below-RPE.
-      // Two sources are distinguished in the legend and line style:
-      //   "2022 GSP"    — adopted carry-over (dashed, solid name)
-      //   "AGWL Mirror" — Feb-April AGWL-anchored baseline pending GSA review
-      //                   (dotted line, "(AGWL mirror)" suffix in legend)
-      if (w.is_2027_gwl_rms) {
+      // For multi-primary aggregates (Chico), only draw threshold lines for
+      // the currently-selected primary well (currentSelection.primaryWell).
+      // All other wells still plot their hydrograph traces above.
+      const activePrimary = currentSelection?.primaryWell;
+      if (w.is_2027_gwl_rms && (!activePrimary || w.swn === activePrimary)) {
         const gse = w.gse != null ? +w.gse : null;
         const isMirror = w.threshold_source === "AGWL Mirror";
         const sourceSuffix = isMirror ? " (AGWL mirror)" : "";

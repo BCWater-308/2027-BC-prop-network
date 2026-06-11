@@ -422,5 +422,50 @@
     "low_spring_data": false,
     "carryover_from": null,
     "note": null
+  },
+  {
+    "swn": "CWSCH02",
+    "site_code": "397284N1218374W002",
+    "mgmt_area_full": "02-Vina-Chico",
+    "source": "2022 GSP",
+    "mt_ft": 85.0,
+    "mo_ft": 105.0,
+    "im_2027_ft": 108.0,
+    "agwl_ft": 131.65,
+    "alltime_min": 86.0,
+    "n_spring_obs": 40,
+    "low_spring_data": false,
+    "carryover_from": null,
+    "note": null
+  },
+  {
+    "swn": "CWSCH03",
+    "site_code": "397284N1218374W003",
+    "mgmt_area_full": "02-Vina-Chico",
+    "source": "2022 GSP",
+    "mt_ft": 85.0,
+    "mo_ft": 108.0,
+    "im_2027_ft": 109.0,
+    "agwl_ft": 128.95,
+    "alltime_min": 110.0,
+    "n_spring_obs": 38,
+    "low_spring_data": false,
+    "carryover_from": null,
+    "note": null
+  },
+  {
+    "swn": "CWSCH07",
+    "site_code": "397284N1218374W004",
+    "mgmt_area_full": "02-Vina-Chico",
+    "source": "2022 GSP",
+    "mt_ft": 85.0,
+    "mo_ft": 95.0,
+    "im_2027_ft": 97.0,
+    "agwl_ft": 114.97,
+    "alltime_min": 95.0,
+    "n_spring_obs": 37,
+    "low_spring_data": false,
+    "carryover_from": null,
+    "note": null
   }
 ]

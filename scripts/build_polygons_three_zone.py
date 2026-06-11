@@ -6,25 +6,21 @@ NEW STRUCTURE (2026-05-19 revision — replaces prior three-zone tessellation):
         Voronoi tessellation of the 13 North-assigned RMS wells, clipped
         to (North mgmt area ∪ Chico mgmt area). Two of the 13 seed wells
         (22N01E09B001M, 22N01E20K001M) are physically in Chico but are
-        treated as North RMS for the 2027 network. Their cells extend
-        into Chico territory naturally via Voronoi proximity. The 11
-        originally-North wells primarily fill North; the 2 reassigned
-        wells' cells sit inside Chico territory.
+        treated as North RMS for the 2027 network (rms_mgmt_area override
+        in wells_resolved.json). Their cells extend into Chico territory
+        naturally via Voronoi proximity.
 
-    Chico (1 polygon, 2 nested RMS sites, 10 well completions)
+    Chico (1 polygon, 4 RMS wells, 9 well completions)
         ONE dissolved polygon = the Chico mgmt area boundary. No Voronoi.
-        Associated with two 2022-GSP nested sites:
-          - CWSCH 7-nest: CWSCH01b/02/03/04/05/06/07
-          - 22N01E28J 3-nest: 22N01E28J001M/003M/005M
-        Of those 10, 5 primaries (CWSCH01b/02/03/07, 22N01E28J003M)
-        have 2022 GSP thresholds; the other 5 are monitored but unthresholded
-        (same as in the 2022 GSP).
+        4 RMS primaries: CWSCH01b (2022 GSP carryover), CWSCH02/03/07
+        (new 2027 RMS, AGWL Mirror thresholds).
+        5 supplemental completions: CWSCH04/05/06, 22N01E28J001M/005M.
 
     South (12 wells)
         Voronoi tessellation of the 12 South-assigned RMS wells, clipped
         to the South mgmt area.
 
-Total output: 13 + 1 + 12 = 26 polygon entries; 35 RMS well completions.
+Total output: 13 + 1 + 12 = 26 polygon entries; 29 RMS wells.
 
 Array order in the output JS: [Chico, ...North, ...South]. This puts the
 big Chico polygon FIRST so the dashboard's Leaflet renderer draws it at
@@ -64,11 +60,14 @@ MA_SHORT = {
 }
 
 # Chico is represented as a single dissolved mgmt-area polygon with
-# **one RMS well** (CWSCH01b) and 9 supplemental nested completions at
-# the 2 historical 2022 GSP nested sites (CWSCH and 22N01E28J). The
-# supplementals are not is_2027_gwl_rms but they plot in the §5.3
-# hydrograph for context.
-CHICO_RMS_PRIMARIES = {"CWSCH01b"}
+# 4 RMS primaries (CWSCH01b/02/03/07) and 5 supplemental completions
+# (CWSCH04/05/06, 22N01E28J001M/005M). All 9 plot in the §5.3
+# hydrograph; only the 4 primaries carry threshold lines.
+CHICO_RMS_PRIMARIES = {"CWSCH01b", "CWSCH02", "CWSCH03", "CWSCH07"}
+# 22N01E28J wells are always included in the Chico context regardless
+# of the historical-RMS site lookup (their former anchor 22N01E28J003M
+# was removed from the network).
+CHICO_EXTRA_CONTEXT = {"22N01E28J001M", "22N01E28J005M"}
 
 
 def load_seeds():
@@ -187,13 +186,11 @@ def main():
     features = []
 
     # ---------------- CHICO: ONE DISSOLVED POLYGON ------------------
-    # 2026-05-21 revision: Chico has ONE RMS well (CWSCH01b). The 9
-    # other completions at the 2 historical 2022 GSP nested sites
-    # (CWSCH02–07 at one pad; 22N01E28J001M/003M/005M at the other)
-    # are supplemental — they plot in the §5.3 hydrograph for context
-    # but don't carry threshold lines. Identify those 9 supplementals
-    # by collapsing all Chico wells to (lat, lng) sites and picking up
-    # every well that shares a site with a CHICO_RMS_PRIMARIES member.
+    # Chico has 4 RMS primaries (CWSCH01b/02/03/07) and 5 supplemental
+    # completions (CWSCH04/05/06, 22N01E28J001M/005M). Identify the 5
+    # supplementals by collapsing all Chico wells to (lat, lng) sites
+    # and picking up every well that shares a site with a
+    # CHICO_RMS_PRIMARIES member but is not itself a primary.
     all_wells_raw = json.loads(WELLS_JSON.read_text())
     chico_rms_swns = sorted(s["swn"] for s in by_net.get("02-Vina-Chico", []))
     # Map lat/lng → wells at that location (Chico mgmt area only)
@@ -218,7 +215,7 @@ def main():
     }
     chico_all_context_swns = sorted({
         swn for key in historical_rms_sites for swn in by_site[key]
-    })
+    } | CHICO_EXTRA_CONTEXT)
     chico_supps = [s for s in chico_all_context_swns if s not in chico_rms_swns]
     chico_boundary_albers = areas["02-Vina-Chico"]
     chico_boundary_wgs = transform(to_wgs, chico_boundary_albers)
@@ -235,9 +232,7 @@ def main():
         "rms_primary_swns": list(chico_rms_swns),
         "rms_supplemental_swns": chico_supps,
         "rms_label": (
-            f"Chico  ·  CWSCH01b (RMS) + {len(chico_supps)} nested supplemental completions"
-            if len(chico_rms_swns) == 1 else
-            f"Chico  ·  {len(chico_all_context_swns)} completions at 2 nested sites"
+            f"Chico  ·  {', '.join(sorted(chico_rms_swns))} (RMS) + {len(chico_supps)} supplemental"
         ),
         "mgmt_area_full": "02-Vina-Chico",
         "mgmt_area": "Chico",
@@ -355,9 +350,9 @@ def main():
     JS_OUT.parent.mkdir(parents=True, exist_ok=True)
     JS_OUT.write_text(
         "// Auto-generated by scripts/build_polygons_three_zone.py - do not edit by hand.\n"
-        "// 2026-05-19 network revision:\n"
-        "//   - 1 Chico aggregate polygon (dissolved mgmt area, 10 well completions)\n"
-        "//   - 13 North Voronoi cells (incl. 2 reassigned from Chico)\n"
+        "// Network: 29 RMS wells across 26 polygon entries.\n"
+        "//   - 1 Chico aggregate polygon (dissolved mgmt area, 4 RMS + 5 supplemental = 9 wells)\n"
+        "//   - 13 North Voronoi cells (incl. 2 physically in Chico, RMS for North)\n"
         "//   - 12 South Voronoi cells\n"
         "// Array order is [Chico, ...North, ...South] so the dashboard draws\n"
         "// Chico at the back and the 2 reassigned-North cells overlay it in\n"

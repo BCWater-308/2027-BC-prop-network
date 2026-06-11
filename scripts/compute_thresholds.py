@@ -5,12 +5,12 @@ Replaces the prior buffer-based "2022 Mirror" methodology.
 
 Two distinct paths depending on whether the well was an RMS in the 2022 GSP:
 
-(A) 2022 GSP carryovers (9 wells) — values unchanged from the 2022 GSP:
+(A) 2022 GSP carryovers (12 wells) — values unchanged from the 2022 GSP:
     - 5 North: 22N01W05M001M, 23N01E07H001M, 23N01E33A001M,
       23N01W36P001M, 23N02W25C001M
     - 3 South: 20N02E24C001M, 21N02E18C003M, 21N02E26E006M (inherits
       from its nested sibling 21N02E26E005M, same lat/lng)
-    - 1 Chico: CWSCH01b
+    - 4 Chico: CWSCH01b, CWSCH02, CWSCH03, CWSCH07
 
 (B) AGWL Mirror (17 new wells: 8 N + 9 S) — derived from a zone-average
     offset between AGWL and the 2022 GSP MT/MO/IM at the 2022 RMS wells.
@@ -42,8 +42,9 @@ Two distinct paths depending on whether the well was an RMS in the 2022 GSP:
       physically inside Chico (22N01E09B001M, 22N01E20K001M) use the
       North zone offsets, consistent with their network role.
     - Chico zone offset is computed for documentation but is not applied
-      to any well in the 2027 network. The only Chico RMS (CWSCH01b) is
-      a carryover. No new RMS wells are assigned to the Chico network.
+      to any well in the 2027 network. All 4 Chico RMS wells
+      (CWSCH01b/02/03/07) are 2022 GSP carryovers. No new RMS wells
+      are assigned to the Chico network via AGWL Mirror.
 
     Notes on spring window (Feb-April):
     - Selected by BCWRC staff after reviewing the three-variant
@@ -187,7 +188,7 @@ def main() -> None:
     zone_offsets, rms_2022_detail = compute_zone_offsets(wells, wells_by_swn, carry, meas)
 
     print("\n=== AGWL Mirror — zone offsets (ft, derived from 2022 RMS, Feb-April) ===")
-    print(f"{'Zone':<18} {'n':>3} {'AveAGWL':>10} {'ΔMT':>8} {'ΔMO':>8} {'ΔIM':>8}")
+    print(f"{'Zone':<18} {'n':>3} {'AveAGWL':>10} {'dMT':>8} {'dMO':>8} {'dIM':>8}")
     for zone in ["01-Vina-North", "02-Vina-Chico", "03-Vina-South"]:
         zo = zone_offsets.get(zone)
         if not zo:
