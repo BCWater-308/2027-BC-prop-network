@@ -266,8 +266,6 @@ Total polygon area is within rounding of 184,400 ac (the Vina Subbasin).
 
 ## MT / MO / IM-2027 threshold methodology
 
-> **Standalone memo.** A self-contained methodology explainer lives at [`analysis/methodology_mt_mo_im.md`](analysis/methodology_mt_mo_im.md). The full three-variant spring-window sensitivity comparison that informed the staff selection of Feb–April is at [`analysis/agwl_window_comparison.md`](analysis/agwl_window_comparison.md). The summary below is in sync with both.
-
 The dashboard shows Sustainable Management Criteria (SMC) threshold lines on
 every 2027 RMS well's hydrograph. Values come from one of two sources, both
 expressed as **groundwater elevation in ft msl** (not depth-below-RPE):
@@ -352,94 +350,6 @@ is keyed on its NETWORK assignment (`rms_mgmt_area`), not its
 geographic location. The 2 wells that are RMS for the North network
 but physically inside Chico (`22N01E09B001M`, `22N01E20K001M`) use the
 North offsets, consistent with their role as North RMS wells.
-
-#### How we arrived at this methodology
-
-Three definitions of "average spring groundwater level" were tested:
-
-- **Feb–May average** (broadest spring window — DWR semiannual
-  monitoring guidance, exact months vary by publication)
-- **Feb–April average** (post-recharge / pre-pumping window; excludes
-  May readings that begin to reflect evapotranspiration onset)
-- **Highest March, averaged across years** (per-year peak in March,
-  then averaged)
-
-All three produce headline dry-well counts within 9 wells of each
-other (430–438), with per-well MTs clustering within a few feet
-across variants. Staff selected the **Feb–April** definition for the
-2027 RMS network on 2026-05-21. The full sensitivity comparison —
-including per-zone offsets, per-well MTs, and a statistical note on
-the three approaches — is in `analysis/agwl_window_comparison.md`,
-with a standalone methodology memo at `analysis/methodology_mt_mo_im.md`.
-
-#### How to read the dry-well count
-
-§5.3's MT-sensitivity widget reports how many domestic wells in each
-polygon would have their bottom above the MT line if the water table
-dropped to MT everywhere in the basin. This is a **sensitivity
-analysis, not a forecast.** Three reasons it overstates real impact:
-
-1. **The subbasin manages to MO, not MT.** Water Year 2025 groundwater
-   was ~68 ft above MT and ~18 ft above MO (Vina GSA Annual Report).
-   MT is a hard floor that triggers undesirable-result findings, not
-   an operational target.
-2. **Observed dry wells through two drought events: ~35.** DWR's
-   Dry Well Reporting System recorded approximately 35 dry-well reports
-   in the Vina Subbasin from January 1, 2014 through December 31, 2025
-   — a period that included the 2012-16 and 2020-22 droughts. The
-   observed count is an order of magnitude below any
-   theoretical-at-MT scenario shown in the widget.
-3. **The MT scenario assumes uniform basin-wide drawdown.** Real
-   drawdown is spatially uneven and rebounds between drought cycles;
-   sustained groundwater at MT across the entire basin is not what
-   the GSP envisions managing toward.
-
-The right way to read §5.3's dry-well numbers is as a comparison of
-methodology and elevation-correction choices, not as predictions.
-
-#### Statistical note on averaging vs. peak-of-peak
-
-The AGWL Mirror methodology averages QA-Good GWE measurements across
-the Feb–April window. A peak-based alternative — taking the highest
-March reading each year and averaging those peaks — was also tested
-and not adopted, primarily because:
-
-- **Averaging reduces variance.** The standard error of a sample mean
-  shrinks as √n. The Feb–April window contributes tens to thousands of
-  measurements per well; the per-year peak contributes one per year.
-- **A per-year maximum is biased upward by construction.** Taking the
-  max each year guarantees the result sits at or above the mean.
-  Anchoring on "typical condition" rather than "best moment of best
-  moment" is closer to the Vina GSA's operational framing.
-- **Data-completeness matters.** Some wells (notably the 4 CWSCH
-  Chico wells) have zero March readings in DWR's record but do have
-  Feb/Apr readings. The Feb–April average uses them; the per-year
-  peak-in-March cannot.
-
-None of these are universal reasons to prefer averaging — peak-based
-estimates have their own uses — but for setting MT/MO/IM mirrors on
-behalf of a regulatory framework, the averaging approach gave staff a
-more stable, more defensible anchor.
-
-### Caveats
-
-The Mirror methodology is a defensible interim baseline, not an adopted
-SMC. Specific limitations:
-
-- **AGWL reflects the observed Feb–April record.** Wells with short
-  records or sparse spring monitoring may understate or overstate
-  typical conditions; estimates from such wells should be considered
-  conservative.
-- **Zone offsets are descriptive statistics, not margins of safety or
-  forward projections.** They do not account for drought severity,
-  climate change, or pumping trajectories. They are a backward-looking
-  calibration of how the GSA's 2022 MT/MO/IM relate to typical spring
-  groundwater levels at the 2022 RMS wells.
-- **The Mirror is NOT a request for GSA approval.** Adopted MT/MO/IM
-  remain the 2022 GSP values until the GSA formally updates them in
-  the 2027 GSP cycle. The Mirror exists solely to give the dashboard
-  a complete set of comparison lines so every polygon's hydrograph can
-  be evaluated in the same visual framework.
 
 ### Rebuilding
 
