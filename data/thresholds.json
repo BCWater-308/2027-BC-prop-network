@@ -71,7 +71,7 @@
     "mgmt_area_full": "03-Vina-South",
     "rms_mgmt_area": "03-Vina-South",
     "source": "AGWL Mirror",
-    "mt_ft": 30,
+    "mt_ft": 10,
     "mo_ft": 92,
     "im_2027_ft": 94,
     "agwl_ft": 122.18,
@@ -80,7 +80,9 @@
     "low_spring_data": false,
     "zone_offset_mt": 92.12,
     "zone_offset_mo": 30.46,
-    "zone_offset_im": 28.12
+    "zone_offset_im": 28.12,
+    "mt_override": true,
+    "mt_computed": 30
   },
   {
     "swn": "21N01E13L004M",
@@ -169,7 +171,7 @@
     "mgmt_area_full": "03-Vina-South",
     "rms_mgmt_area": "03-Vina-South",
     "source": "AGWL Mirror",
-    "mt_ft": 25,
+    "mt_ft": 30,
     "mo_ft": 87,
     "im_2027_ft": 89,
     "agwl_ft": 117.55,
@@ -178,7 +180,9 @@
     "low_spring_data": false,
     "zone_offset_mt": 92.12,
     "zone_offset_mo": 30.46,
-    "zone_offset_im": 28.12
+    "zone_offset_im": 28.12,
+    "mt_override": true,
+    "mt_computed": 25
   },
   {
     "swn": "21N03E32B001M",

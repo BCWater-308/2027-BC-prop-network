@@ -87,6 +87,14 @@ OUT = ROOT / "data" / "thresholds.json"
 SPRING_MONTHS = {2, 3, 4}  # Feb, March, April — staff-selected window
 LOW_DATA_THRESHOLD = 5     # fewer than this many spring readings = flag
 
+# Manual MT overrides (ft msl). These supersede the computed AGWL Mirror MT
+# for wells reconciled against the LWA domestic-well MT analysis so the §5.3
+# dry-well counts match the LWA workbook. MO/IM are left as computed.
+MT_OVERRIDE = {
+    "21N01E10B003M": 10,
+    "21N02E32E001M": 30,
+}
+
 
 def load_measurements() -> dict:
     text = MEAS_JS.read_text()
@@ -286,6 +294,15 @@ def main() -> None:
             "zone_offset_im": round(zo["ave_delta_im"], 2) if zo["ave_delta_im"] is not None else None,
         }
         out.append(rec)
+
+    # Apply manual MT overrides (see MT_OVERRIDE note above).
+    for rec in out:
+        if rec["swn"] in MT_OVERRIDE:
+            old_mt = rec.get("mt_ft")
+            rec["mt_ft"] = MT_OVERRIDE[rec["swn"]]
+            rec["mt_override"] = True
+            rec["mt_computed"] = old_mt
+            print(f"  MT override: {rec['swn']} {old_mt} -> {rec['mt_ft']}")
 
     out.sort(key=lambda r: r["swn"])
 
