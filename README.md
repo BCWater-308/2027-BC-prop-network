@@ -369,13 +369,13 @@ supplemental nested completions are not RMS in 2027 and are left blank.
 
 ## Domestic-well sensitivity to MT (2026-05-22)
 
-§5.2 includes a "Show domestic wells" toggle that overlays **1,253
-active domestic wells** from the **`Vina_GWL_MT22_analysis_v6.xlsx`**
-inventory, provided by Larry Walker Associates (LWA) in April 2026.
+§5.2 includes a "Show domestic wells" toggle that overlays **1,472
+active domestic wells** from the **`Vina_GWL_MT27_analysis_v11.xlsx`**
+inventory, provided by Larry Walker Associates (LWA) in June 2026.
 The wells are canvas-rendered for performance and color-coded by which
-2027 mgmt area their lat/lng falls into. A build script under `scripts/`
-stages the inventory and spatial-joins each well to its containing
-2027 polygon.
+2027 mgmt area their lat/lng falls into. `scripts/build_domestic_wells.py`
+stages the inventory and spatial-joins each well (point-in-polygon) to
+its containing 2027 three-zone polygon.
 
 §5.3 includes the **MT sensitivity widget**: a slider, an
 elevation-correction toggle, and a sensitivity table.
@@ -388,7 +388,7 @@ the original MT and the slider-adjusted MT.
 
 **Sensitivity table**. Two rows:
 
-- **Subbasin (basin-wide, n=1,253)**: cumulative dry counts across
+- **Subbasin (basin-wide, n=1,472)**: cumulative dry counts across
   the entire 2027 RMS network. For each polygon, computes
   dry-at-MT, dry-at-MT+5, ..., dry-at-MT+30 using that polygon's
   RMS well's MT, and sums across polygons.
@@ -448,7 +448,7 @@ state.
 | Layer | Source | Endpoint |
 |-------|--------|----------|
 | RMS network membership + well metadata (79 wells in the broader monitoring set, 29 flagged as 2027 RMS) | `BC Network 2026 v8.xlsx` | local file (Butte County WRC) |
-| Domestic wells overlay (1,253 active wells used in the §5.2 overlay and §5.3 sensitivity widget) | `Vina_GWL_MT22_analysis_v6.xlsx` | local file (provided by Larry Walker Associates, April 2026) |
+| Domestic wells overlay (1,472 active wells used in the §5.2 overlay and §5.3 sensitivity widget) | `Vina_GWL_MT27_analysis_v11.xlsx` | local file (provided by Larry Walker Associates, June 2026) |
 | DWR site_code resolution | DWR CKAN Stations resource | https://data.cnra.ca.gov/dataset/periodic-groundwater-level-measurements (resource `af157380-...`) |
 | Periodic GWL measurements | DWR CKAN Measurements resource | same dataset, resource `bfa9f262-24a1-45bd-8dc8-138bc8107266` (filtered to network sites via `datastore_search` API) |
 | Vina Subbasin boundary | DWR ArcGIS REST i08 B118 | `Basin_Subbasin_Number='5-021.57'` |
